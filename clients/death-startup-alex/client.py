@@ -134,7 +134,6 @@ def processTurn(serverResponse):
 
                             # Update enemy health
                             enemyteam[enemyteam.index(priority_enemy)].attributes.health -= character.attributes.damage - priority_enemy.attributes.armor
-                            print enemyteam[enemyteam.index(priority_enemy)].attributes.health
 
                         myteam.remove(character)
                         if enemyteam[enemyteam.index(priority_enemy)].is_dead():
