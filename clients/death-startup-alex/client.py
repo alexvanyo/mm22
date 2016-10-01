@@ -147,7 +147,7 @@ def processTurn(serverResponse):
                             evaluate(False)
                             break
 
-            elif first_pass and processTurn.turn_count <= 4:
+            elif first_pass:
                 is_sprinting = False
                 for enemy in enemyteam:
                     if not enemy.is_dead() and enemy.attributes.get_attribute("MovementSpeed") > 1:
