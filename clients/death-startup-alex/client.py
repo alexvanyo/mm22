@@ -168,7 +168,7 @@ def processTurn(serverResponse):
                     new_best_position = one.position
                     for valid_position in new_valid_positions:
                         new_distance = get_closest_enemy(valid_position)
-                        print get_closest_enemy(new_best_position), new_distance
+                        
                         if new_distance > get_closest_enemy(new_best_position):
                             new_best_position = valid_position
 
