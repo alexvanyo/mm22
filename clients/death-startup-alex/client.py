@@ -181,6 +181,17 @@ def processTurn(serverResponse):
                             "Location": new_best_position,
                         })
 
+            elif processTurn.turn_count > 120:
+                target = get_priority(enemyteam)
+
+                for character in myteam:
+                    actions.append({
+                        "Action": "Move",
+                        "CharacterId": character.id,
+                        "TargetId": target.id,
+                    })
+
+
     def get_closest_enemy(position):
         closest_distance = 100
         for enemy in enemyteam:
