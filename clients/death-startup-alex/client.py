@@ -77,7 +77,7 @@ def processTurn(serverResponse):
 
         lowest_health = lowest_priorities[0]
         for enemy in lowest_priorities:
-            if enemy.attributes.health < lowest_health.attributes.health:
+            if enemy.attributes.get_attribute("Health") < lowest_health.attributes.get_attribute("Health"):
                 lowest_health = enemy
 
         return lowest_health
@@ -106,23 +106,25 @@ def processTurn(serverResponse):
                 # Determine the max total debuff we can apply
                 for character in myteam:
                     # Add up the damage each character could do
-                    if not character.is_dead():
-                        total_damage += character.attributes.damage - priority_enemy.attributes.armor
+                    if not character.is_dead() and not character.attributes.get_attribute("Stunned"):
+                        total_damage += character.attributes.get_attribute("Damage") - priority_enemy.attributes.get_attribute("Armor")
 
-                    cooldown = character.abilities.get(2)
-                    if cooldown == 0:
+                    if character.can_use_ability(2) and total_debuff < priority_enemy.attributes.get_attribute("Armor"):
                         total_debuff -= game_consts.abilitiesList[2]["StatChanges"][0]["Change"]
                         characters_to_cast[character.id] = True
                     else:
                         characters_to_cast[character.id] = False
 
-                turns_to_kill_no_debuff = math.ceil(priority_enemy.attributes.health / total_damage)
-                turns_to_kill_debuff = math.ceil((priority_enemy.attributes.health) / (total_damage + total_debuff) + 1)
-                should_debuff = turns_to_kill_debuff < turns_to_kill_no_debuff
+                if total_damage == 0:
+                    should_debuff = False
+                else:
+                    turns_to_kill_no_debuff = math.ceil(priority_enemy.attributes.get_attribute("Health") / total_damage)
+                    turns_to_kill_debuff = math.ceil((priority_enemy.attributes.get_attribute("Health")) / (total_damage + total_debuff) + 1)
+                    should_debuff = turns_to_kill_debuff < turns_to_kill_no_debuff
 
                 # Decide if each character should debuff or attack
                 for character in list(myteam):
-                    if not character.is_dead():
+                    if not character.is_dead() and not character.attributes.get_attribute("Stunned"):
                         if should_debuff and characters_to_cast[character.id]:
                             actions.append({
                                 "Action": "Cast",
@@ -138,7 +140,7 @@ def processTurn(serverResponse):
                             })
 
                             # Update enemy health
-                            enemyteam[enemyteam.index(priority_enemy)].attributes.health -= character.attributes.damage - priority_enemy.attributes.armor
+                            enemyteam[enemyteam.index(priority_enemy)].attributes.health -= character.attributes.get_attribute("Damage") - priority_enemy.attributes.get_attribute("Armor")
 
                         myteam.remove(character)
                         if enemyteam[enemyteam.index(priority_enemy)].is_dead():
@@ -148,7 +150,7 @@ def processTurn(serverResponse):
             elif first_pass and processTurn.turn_count <= 4:
                 is_sprinting = False
                 for enemy in enemyteam:
-                    if not enemy.is_dead() and enemy.attributes.movementSpeed > 1:
+                    if not enemy.is_dead() and enemy.attributes.get_attribute("MovementSpeed") > 1:
                         is_sprinting = True
 
                 if is_sprinting:
@@ -168,7 +170,7 @@ def processTurn(serverResponse):
                     new_best_position = one.position
                     for valid_position in new_valid_positions:
                         new_distance = get_closest_enemy(valid_position)
-                        
+
                         if new_distance > get_closest_enemy(new_best_position):
                             new_best_position = valid_position
 
