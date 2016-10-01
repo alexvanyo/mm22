@@ -54,7 +54,7 @@ def processTurn(serverResponse):
                 enemyteam.append(character)
 # ------------------ You shouldn't change above but you can ---------------
     def get_priority(enemies):
-        PRIORITY_LIST = ["Assassin", "Sorcerer", "Wizard", "Archer", "Warrior", "Enchanter", "Paladin", "Druid"]
+        PRIORITY_LIST = ["Assassin", "Sorcerer", "Wizard", "Enchanter", "Archer", "Warrior", "Paladin", "Druid"]
         lowest_priorities = []
 
         for enemy in enemies:
@@ -77,68 +77,81 @@ def processTurn(serverResponse):
 
         return lowest_health
 
-    # All characters are on the same spot
-    one = None
-    for character in myteam:
-        if not character.is_dead():
-            one = character
-            break
+    def evaluate(first_pass):
+        # All characters are on the same spot
+        one = None
+        for character in myteam:
+            if not character.is_dead():
+                one = character
+                break
 
-    if one:
-        targets = []
-        for character in enemyteam:
-            if not character.is_dead() and one.in_range_of(character, gameMap):
-                targets.append(character)
+        if one:
+            targets = []
+            for character in enemyteam:
+                if not character.is_dead() and one.in_range_of(character, gameMap):
+                    targets.append(character)
 
-        if len(targets) > 0:
-            lowest_health_enemy = get_priority(targets)
+            if len(targets) > 0:
+                priority_enemy = get_priority(targets)
 
-            total_damage = 0
-            total_debuff = 0
-            characters_to_cast = {}
+                total_damage = 0
+                total_debuff = 0
+                characters_to_cast = {}
 
-            # Determine the max total debuff we can apply
-            for character in myteam:
-                # Add up the damage each character could do
-                if not character.is_dead():
-                    total_damage += character.attributes.damage - lowest_health_enemy.attributes.armor
+                # Determine the max total debuff we can apply
+                for character in myteam:
+                    # Add up the damage each character could do
+                    if not character.is_dead():
+                        total_damage += character.attributes.damage - priority_enemy.attributes.armor
 
-                cooldown = character.abilities.get(2)
-                if cooldown == 0:
-                    total_debuff -= game_consts.abilitiesList[2]["StatChanges"][0]["Change"]
-                    characters_to_cast[character.id] = True
-                else:
-                    characters_to_cast[character.id] = False
+                    cooldown = character.abilities.get(2)
+                    if cooldown == 0:
+                        total_debuff -= game_consts.abilitiesList[2]["StatChanges"][0]["Change"]
+                        characters_to_cast[character.id] = True
+                    else:
+                        characters_to_cast[character.id] = False
 
-            turns_to_kill_no_debuff = math.ceil(lowest_health_enemy.attributes.health / total_damage)
-            turns_to_kill_debuff = math.ceil((lowest_health_enemy.attributes.health) / (total_damage + total_debuff) + 1)
-            should_debuff = turns_to_kill_debuff < turns_to_kill_no_debuff
+                turns_to_kill_no_debuff = math.ceil(priority_enemy.attributes.health / total_damage)
+                turns_to_kill_debuff = math.ceil((priority_enemy.attributes.health) / (total_damage + total_debuff) + 1)
+                should_debuff = turns_to_kill_debuff < turns_to_kill_no_debuff
 
-            # Decide if each character should debuff or attack
-            for character in myteam:
-                if should_debuff and characters_to_cast[character.id]:
+                # Decide if each character should debuff or attack
+                for character in list(myteam):
+                    if not character.is_dead():
+                        if should_debuff and characters_to_cast[character.id]:
+                            actions.append({
+                                "Action": "Cast",
+                                "CharacterId": character.id,
+                                "TargetId": priority_enemy.id,
+                                "AbilityId": 2
+                            })
+                        else:
+                            actions.append({
+                                "Action": "Attack",
+                                "CharacterId": character.id,
+                                "TargetId": priority_enemy.id,
+                            })
+
+                            # Update enemy health
+                            enemyteam[enemyteam.index(priority_enemy)].attributes.health -= character.attributes.damage - priority_enemy.attributes.armor
+                            print enemyteam[enemyteam.index(priority_enemy)].attributes.health
+
+                        myteam.remove(character)
+                        if enemyteam[enemyteam.index(priority_enemy)].is_dead():
+                            evaluate(False)
+                            break
+
+            elif first_pass:
+                target = get_priority(enemyteam)
+
+                for character in myteam:
                     actions.append({
-                        "Action": "Cast",
+                        "Action": "Move",
                         "CharacterId": character.id,
-                        "TargetId": lowest_health_enemy.id,
-                        "AbilityId": 2
-                    })
-                else:
-                    actions.append({
-                        "Action": "Attack",
-                        "CharacterId": character.id,
-                        "TargetId": lowest_health_enemy.id,
+                        "TargetId": target.id,
                     })
 
-        else:
-            target = get_priority(enemyteam)
-
-            for character in myteam:
-                actions.append({
-                    "Action": "Move",
-                    "CharacterId": character.id,
-                    "TargetId": target.id,
-                })
+    evaluate(True)
                
 
     # Send actions to the server
