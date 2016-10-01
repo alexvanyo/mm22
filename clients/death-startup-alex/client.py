@@ -21,6 +21,8 @@ teamName = "Death Startup Alex"
 
 # Set initial connection data
 def initialResponse():
+    processTurn.turn_count = 0
+
 # ------------------------- CHANGE THESE VALUES -----------------------
     return {'TeamName': teamName,
             'Characters': [
@@ -53,6 +55,9 @@ def processTurn(serverResponse):
                 character.serialize(characterJson)
                 enemyteam.append(character)
 # ------------------ You shouldn't change above but you can ---------------
+
+    processTurn.turn_count += 1
+
     def get_priority(enemies):
         PRIORITY_LIST = ["Assassin", "Sorcerer", "Wizard", "Enchanter", "Archer", "Warrior", "Paladin", "Druid"]
         lowest_priorities = []
@@ -140,17 +145,60 @@ def processTurn(serverResponse):
                             evaluate(False)
                             break
 
-            elif first_pass:
-                target = get_priority(enemyteam)
+            elif first_pass and processTurn.turn_count <= 4:
+                is_sprinting = False
+                for enemy in enemyteam:
+                    if not enemy.is_dead() and enemy.attributes.movementSpeed > 1:
+                        is_sprinting = True
 
-                for character in myteam:
-                    actions.append({
-                        "Action": "Move",
-                        "CharacterId": character.id,
-                        "TargetId": target.id,
-                    })
+                if is_sprinting:
+                    one = None
+                    for character in myteam:
+                        if not character.is_dead():
+                            one = character
+                            break
 
-    evaluate(True)
+                    valid_positions = gameMap.get_valid_adjacent_pos(one.position)
+
+                    new_valid_positions = []
+
+                    for valid_position in valid_positions:
+                        new_valid_positions.extend(gameMap.get_valid_adjacent_pos(valid_position))
+
+                    new_best_position = one.position
+                    for valid_position in new_valid_positions:
+                        new_distance = get_closest_enemy(valid_position)
+                        print get_closest_enemy(new_best_position), new_distance
+                        if new_distance > get_closest_enemy(new_best_position):
+                            new_best_position = valid_position
+
+                    for character in myteam:
+                        actions.append({
+                            "Action": "Move",
+                            "CharacterId": character.id,
+                            "Location": new_best_position,
+                        })
+
+    def get_closest_enemy(position):
+        closest_distance = 100
+        for enemy in enemyteam:
+            if not enemy.is_dead():
+                distance = len(gameMap.bfs(position, enemy.position))
+                if distance < closest_distance:
+                    closest_distance = distance
+
+        return closest_distance
+
+    if processTurn.turn_count == 1:
+        for character in myteam:
+            actions.append({
+                "Action": "Cast",
+                "CharacterId": character.id,
+                "TargetId": character.id,
+                "AbilityId": 12
+            })
+    else:
+        evaluate(True)
 
     # Send actions to the server
     return {
