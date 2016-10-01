@@ -53,11 +53,27 @@ def processTurn(serverResponse):
                 character.serialize(characterJson)
                 enemyteam.append(character)
 # ------------------ You shouldn't change above but you can ---------------
-    def get_lowest_health_character(characters):
-        lowest_health = characters[0]
-        for character in characters:
-            if character.attributes.health < lowest_health.attributes.health:
-                lowest_health = character
+    def get_priority(enemies):
+        PRIORITY_LIST = ["Assassin", "Sorcerer", "Wizard", "Archer", "Warrior", "Enchanter", "Paladin", "Druid"]
+        lowest_priorities = []
+
+        for enemy in enemies:
+            if len(lowest_priorities) == 0:
+                lowest_priorities.append(enemy)
+                continue
+
+            old_priority = PRIORITY_LIST.index(lowest_priorities[0].classId)
+            new_priority = PRIORITY_LIST.index(enemy.classId)
+
+            if new_priority <= old_priority:
+                if new_priority < old_priority:
+                    lowest_priorities = []
+                lowest_priorities.append(enemy)
+
+        lowest_health = lowest_priorities[0]
+        for enemy in lowest_priorities:
+            if enemy.attributes.health < lowest_health.attributes.health:
+                lowest_health = enemy
 
         return lowest_health
 
@@ -73,11 +89,10 @@ def processTurn(serverResponse):
         for character in enemyteam:
             if not character.is_dead() and one.in_range_of(character, gameMap):
                 targets.append(character)
-                break
 
         if len(targets) > 0:
-            lowest_health_enemy = get_lowest_health_character(targets)
-            
+            lowest_health_enemy = get_priority(targets)
+
             total_damage = 0
             total_debuff = 0
             characters_to_cast = {}
@@ -116,7 +131,7 @@ def processTurn(serverResponse):
                     })
 
         else:
-            target = get_lowest_health_character(enemyteam)
+            target = get_priority(enemyteam)
 
             for character in myteam:
                 actions.append({
