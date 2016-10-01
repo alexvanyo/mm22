@@ -15,7 +15,7 @@ from src.game.gamemap import *
 gameMap = GameMap()
 
 # --------------------------- SET THIS IS UP -------------------------
-teamName = "Death Startup"
+teamName = "Test"
 # ---------------------------------------------------------------------
 
 # Set initial connection data
@@ -23,11 +23,11 @@ def initialResponse():
 # ------------------------- CHANGE THESE VALUES -----------------------
     return {'TeamName': teamName,
             'Characters': [
-                {"CharacterName": "Java the Hutt",
+                {"CharacterName": "Druid",
                  "ClassId": "Druid"},
-                {"CharacterName": "Adobe-wan Kenobi",
+                {"CharacterName": "Archer",
                  "ClassId": "Archer"},
-                {"CharacterName": "R=2,D=2",
+                {"CharacterName": "Warrior",
                  "ClassId": "Warrior"},
             ]}
 # ---------------------------------------------------------------------
