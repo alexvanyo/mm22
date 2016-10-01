@@ -25,7 +25,7 @@ def initialResponse():
             'Characters': [
                 {"CharacterName": "JavaTheHutt",
                  "ClassId": "Archer"},
-                {"CharacterName": "Adobe1Kenobi",
+                {"CharacterName": "AdoB1KenoB",
                  "ClassId": "Archer"},
                 {"CharacterName": "R=2,D=2",
                  "ClassId": "Archer"},
