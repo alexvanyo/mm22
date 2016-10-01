@@ -59,7 +59,7 @@ def processTurn(serverResponse):
     processTurn.turn_count += 1
 
     def get_priority(enemies):
-        PRIORITY_LIST = ["Assassin", "Sorcerer", "Wizard", "Enchanter", "Archer", "Warrior", "Paladin", "Druid"]
+        PRIORITY_LIST = ["Assassin", "Sorcerer", "Wizard", "Enchanter", "Archer", "Paladin", "Druid", "Warrior"]
         lowest_priorities = []
 
         for enemy in enemies:
@@ -148,17 +148,14 @@ def processTurn(serverResponse):
                             break
 
             elif first_pass:
-                is_sprinting = False
-                for enemy in enemyteam:
-                    if not enemy.is_dead() and enemy.attributes.get_attribute("MovementSpeed") > 1:
-                        is_sprinting = True
 
-                if is_sprinting:
-                    one = None
-                    for character in myteam:
-                        if not character.is_dead():
-                            one = character
-                            break
+                one = None
+                for character in myteam:
+                    if not character.is_dead():
+                        one = character
+                        break
+
+                if one.attributes.get_attribute("MovementSpeed") > 1:
 
                     valid_positions = gameMap.get_valid_adjacent_pos(one.position)
 
@@ -180,16 +177,30 @@ def processTurn(serverResponse):
                             "CharacterId": character.id,
                             "Location": new_best_position,
                         })
+                else:
+                    enemy_is_sprinting = False
+                    for enemy in enemyteam:
+                        if not enemy.is_dead() and enemy.attributes.get_attribute("MovementSpeed") > 1:
+                            enemy_is_sprinting = True
 
-            elif processTurn.turn_count > 120:
-                target = get_priority(enemyteam)
+                    if enemy_is_sprinting:
+                        for character in myteam:
+                            actions.append({
+                                "Action": "Cast",
+                                "CharacterId": character.id,
+                                "TargetId": character.id,
+                                "AbilityId": 12
+                            })
 
-                for character in myteam:
-                    actions.append({
-                        "Action": "Move",
-                        "CharacterId": character.id,
-                        "TargetId": target.id,
-                    })
+                    elif processTurn.turn_count > 120:
+                        target = get_priority(enemyteam)
+
+                        for character in myteam:
+                            actions.append({
+                                "Action": "Move",
+                                "CharacterId": character.id,
+                                "TargetId": target.id,
+                            })
 
 
     def get_closest_enemy(position):
@@ -202,16 +213,7 @@ def processTurn(serverResponse):
 
         return closest_distance
 
-    if processTurn.turn_count == 1:
-        for character in myteam:
-            actions.append({
-                "Action": "Cast",
-                "CharacterId": character.id,
-                "TargetId": character.id,
-                "AbilityId": 12
-            })
-    else:
-        evaluate(True)
+    evaluate(True)
 
     # Send actions to the server
     return {
