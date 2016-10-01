@@ -52,26 +52,60 @@ def processTurn(serverResponse):
                 character.serialize(characterJson)
                 enemyteam.append(character)
 # ------------------ You shouldn't change above but you can ---------------
+    def get_lowest_health_character(characters):
+        lowest_health = characters[0]
+        for character in characters:
+            if character.attributes.health < lowest_health.attributes.health:
+                lowest_health = character
 
-    # Choose a target
-    target = None
-    for character in enemyteam:
+        return lowest_health
+
+    one = None
+    for character in myteam:
         if not character.is_dead():
-            target = character
+            one = character
             break
 
-    # If we found a target
-    if target:
-        for character in myteam:
-            # If I am in range, either move towards target
-            if character.in_range_of(target, gameMap):
-                # Am I already trying to cast something?
-                actions.append({
-                            "Action": "Attack",
-                            "CharacterId": character.id,
-                            "TargetId": target.id,
-                        })
-            else:
+    # Choose a target
+    if one:
+        targets = []
+        for character in enemyteam:
+            if not character.is_dead() and one.in_range_of(character, gameMap):
+                targets.append(character)
+                break
+
+        if len(targets) > 0:
+            lowest_health_enemy = get_lowest_health_character(targets)
+
+            total_damage = 0
+            total_debuff = 0
+
+            for character in myteam:
+                if not character.is_dead():
+                    total_damage += character.attributes.damage - lowest_health_enemy.attributes.armor
+                for abilityId, cooldown in character.abilities.items():
+                    if abilityId == 2 and cooldown == 0:
+                        total_debuff -= game_consts.abilitiesList[int(abilityId)]["StatChanges"][0]["Change"]
+                        break
+
+            for character in myteam:
+                if total_damage < 4 * total_debuff or character.abilities.get(2) > 0:
+                    actions.append({
+                                "Action": "Attack",
+                                "CharacterId": character.id,
+                                "TargetId": lowest_health_enemy.id,
+                            })
+                else:
+                    actions.append({
+                                "Action": "Cast",
+                                "CharacterId": character.id,
+                                "TargetId": lowest_health_enemy.id,
+                                "AbilityId": 2
+                            })
+        else:
+            target = get_lowest_health_character(enemyteam)
+
+            for character in myteam:
                 actions.append({
                     "Action": "Move",
                     "CharacterId": character.id,
