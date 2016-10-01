@@ -24,11 +24,11 @@ def initialResponse():
     return {'TeamName': teamName,
             'Characters': [
                 {"CharacterName": "JavaTheHutt",
-                 "ClassId": "Druid"},
+                 "ClassId": "Archer"},
                 {"CharacterName": "Adobe1Kenobi",
                  "ClassId": "Archer"},
                 {"CharacterName": "R=2,D=2",
-                 "ClassId": "Warrior"},
+                 "ClassId": "Archer"},
             ]}
 # ---------------------------------------------------------------------
 
@@ -66,36 +66,18 @@ def processTurn(serverResponse):
             # If I am in range, either move towards target
             if character.in_range_of(target, gameMap):
                 # Am I already trying to cast something?
-                if character.casting is None:
-                    cast = False
-                    for abilityId, cooldown in character.abilities.items():
-                        # Do I have an ability not on cooldown
-                        if cooldown == 0:
-                            # If I can, then cast it
-                            ability = game_consts.abilitiesList[int(abilityId)]
-                            # Get ability
-                            actions.append({
-                                "Action": "Cast",
-                                "CharacterId": character.id,
-                                # Am I buffing or debuffing? If buffing, target myself
-                                "TargetId": target.id if ability["StatChanges"][0]["Change"] < 0 else character.id,
-                                "AbilityId": int(abilityId)
-                            })
-                            cast = True
-                            break
-                    # Was I able to cast something? Either wise attack
-                    if not cast:
-                        actions.append({
+                actions.append({
                             "Action": "Attack",
                             "CharacterId": character.id,
                             "TargetId": target.id,
                         })
-            else: # Not in range, move towards
+            else:
                 actions.append({
                     "Action": "Move",
                     "CharacterId": character.id,
                     "TargetId": target.id,
                 })
+               
 
     # Send actions to the server
     return {
