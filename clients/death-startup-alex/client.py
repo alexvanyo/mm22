@@ -16,7 +16,7 @@ from src.game.gamemap import *
 gameMap = GameMap()
 
 # --------------------------- SET THIS IS UP -------------------------
-teamName = "Death Startup"
+teamName = "Death Startup Alex"
 # ---------------------------------------------------------------------
 
 # Set initial connection data
@@ -151,7 +151,6 @@ def processTurn(serverResponse):
                     })
 
     evaluate(True)
-               
 
     # Send actions to the server
     return {
